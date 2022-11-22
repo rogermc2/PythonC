@@ -8,30 +8,18 @@ package body Python_API is
 
    subtype PyObject is System.Address;
 
-   procedure Py_SetProgramName (Name : in Interfaces.C.char_array);
-   pragma Import (C, Py_SetProgramName, "Py_SetProgramName");
-
-   procedure Py_Initialize;
-   pragma Import (C, Py_Initialize, "Py_Initialize");
-
-   procedure Py_Finalize;
-   pragma Import (C, Py_Finalize, "Py_Finalize");
-    
-   function PyRun_SimpleString (Command : in Interfaces.C.char_array)
-                                return Interfaces.C.int;
-   pragma Import (C, PyRun_SimpleString, "PyRun_SimpleString");
-    
-   procedure Py_IncRef (Obj : in PyObject);
-   pragma Import (C, Py_IncRef, "Py_IncRef");
-    
+   function PyBytes_AsString (Obj : PyObject)
+                               return Interfaces.C.Strings.char_array_access;
+   pragma Import (C, PyBytes_AsString, "PyBytes_AsString");
+   
    procedure Py_DecRef (Obj : in PyObject);
    pragma Import (C, Py_DecRef, "Py_DecRef");
-    
-   function PyInt_AsLong (I : in PyObject) return Interfaces.C.long;
-   pragma Import (C, PyInt_AsLong, "PyLong_AsLong");
-      
-   function PyString_FromString (Str : in Interfaces.C.char_array) return PyObject;
-   pragma Import (C, PyString_FromString, "PyUnicode_FromString");
+
+   procedure PyErr_Print;
+   pragma Import (C, PyErr_Print, "PyErr_Print");
+   
+   procedure Py_Finalize;
+   pragma Import (C, Py_Finalize, "Py_Finalize");   
     
    function PyImport_Import (Obj : in PyObject) return PyObject;
    pragma Import (C, PyImport_Import, "PyImport_Import");
@@ -39,6 +27,15 @@ package body Python_API is
    function PyImport_ImportModule (Str : Interfaces.C.char_array)
                                    return PyObject;
    pragma Import (C, PyImport_ImportModule, "PyImport_ImportModule");
+   
+   procedure Py_IncRef (Obj : in PyObject);
+   pragma Import (C, Py_IncRef, "Py_IncRef");   
+    
+   procedure Py_Initialize;
+   pragma Import (C, Py_Initialize, "Py_Initialize");
+   
+   function PyInt_AsLong (I : in PyObject) return Interfaces.C.long;
+   pragma Import (C, PyInt_AsLong, "PyLong_AsLong");
    
    function PyObject_CallMethod
      (Obj    : PyObject; Name : Interfaces.C.char_array;
@@ -52,41 +49,33 @@ package body Python_API is
    function PyObject_CallObject (Obj : in PyObject; Args : in PyObject) return PyObject;
    pragma Import (C, PyObject_CallObject, "PyObject_CallObject");
    
-   procedure PyErr_Print;
-   pragma Import (C, PyErr_Print, "PyErr_Print");
+   function PyRun_SimpleString (Command : in Interfaces.C.char_array)
+                                return Interfaces.C.int;
+   pragma Import (C, PyRun_SimpleString, "PyRun_SimpleString");
+
+   procedure Py_SetProgramName (Name : in Interfaces.C.char_array);
+   pragma Import (C, Py_SetProgramName, "Py_SetProgramName");
+   
+   function PyString_FromString (Str : in Interfaces.C.char_array) return PyObject;
+   pragma Import (C, PyString_FromString, "PyUnicode_FromString");
     
    function PyUnicode_AsUTF8String (Obj : PyObject) return PyObject;
    pragma Import (C, PyUnicode_AsUTF8String, "PyUnicode_AsUTF8String");
-    
-   function PyBytes_AsString (Obj : PyObject)
-                               return Interfaces.C.Strings.char_array_access;
-   pragma Import (C, PyBytes_AsString, "PyBytes_AsString");
    
    -- --------------------------------------------------------------------------
+   -- --------------------------------------------------------------------------
  
-   procedure Initialize (Program_Name : in String := "") is
---        use Ada.Directories;
---        CWD : constant String := Current_Directory;  
+   procedure Close_Module (M : in Module) is
    begin
-      if Program_Name /= "" then
-         declare
-            C_Name           : Interfaces.C.char_array := Interfaces.C.To_C (Program_Name);
-            Program_Name_Ptr : access Interfaces.C.char_array := new Interfaces.C.char_array'(C_Name);
-         begin
-            Py_SetProgramName (Program_Name_Ptr.all);
-         end;
-      end if;
-       
-      Py_Initialize;
-      
-      --  Below: workaround for the following issue:
-      --  http://stackoverflow.com/questions/13422206/how-to-load-a-custom-python-module-in-c
+      Py_DecRef (PyObject (M));
+   end Close_Module;
 
-      Execute_String ("import sys");   
-      Execute_String ("sys.path.append('.')");
---        Execute_String ("sys.path.append('/Ada_Projects/python/ada-python')");
---        Execute_String ("sys.path.append(" & Cwd & ")");
-   end Initialize;
+   -- --------------------------------------------------------------------------
+   procedure Execute_String (Script : in String) is
+      Dummy : Interfaces.C.int;
+   begin
+      Dummy := PyRun_SimpleString (Interfaces.C.To_C (Script));
+   end Execute_String;
     
    -- --------------------------------------------------------------------------
  
@@ -94,14 +83,6 @@ package body Python_API is
    begin
       Py_Finalize;
    end Finalize;
-    
-   -- --------------------------------------------------------------------------
- 
-   procedure Execute_String (Script : in String) is
-      Dummy : Interfaces.C.int;
-   begin
-      Dummy := PyRun_SimpleString (Interfaces.C.To_C (Script));
-   end Execute_String;
     
    -- --------------------------------------------------------------------------
  
@@ -141,11 +122,30 @@ package body Python_API is
    
    -- --------------------------------------------------------------------------
  
-   procedure Close_Module (M : in Module) is
+   procedure Initialize (Program_Name : in String := "") is
+--        use Ada.Directories;
+--        CWD : constant String := Current_Directory;  
    begin
-      Py_DecRef (PyObject (M));
-   end Close_Module;
+      if Program_Name /= "" then
+         declare
+            C_Name           : Interfaces.C.char_array := Interfaces.C.To_C (Program_Name);
+            Program_Name_Ptr : access Interfaces.C.char_array := new Interfaces.C.char_array'(C_Name);
+         begin
+            Py_SetProgramName (Program_Name_Ptr.all);
+         end;
+      end if;
+       
+      Py_Initialize;
+      
+      --  Below: workaround for the following issue:
+      --  http://stackoverflow.com/questions/13422206/how-to-load-a-custom-python-module-in-c
 
+      Execute_String ("import sys");   
+      Execute_String ("sys.path.append('.')");
+--        Execute_String ("sys.path.append('/Ada_Projects/python/ada-python')");
+--        Execute_String ("sys.path.append(" & Cwd & ")");
+   end Initialize;
+    
    -- --------------------------------------------------------------------------
    --  helpers for use from all overloaded Call subprograms
    
