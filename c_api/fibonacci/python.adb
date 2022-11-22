@@ -205,9 +205,7 @@ package body Python is
    begin
       PyParams := Py_BuildValue (Interfaces.C.To_C ("(i)"),
                                  Interfaces.C.int (A));
-      Ada.Text_IO.Put_Line ("Call_Object");
       PyResult := Call_Object (F, Function_Name, PyParams);
-      Ada.Text_IO.Put_Line ("Call_Object");
       Result := PyInt_AsLong (PyResult);
       Py_DecRef (PyParams);
       Py_DecRef (PyResult);
