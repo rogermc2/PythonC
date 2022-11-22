@@ -1,0 +1,24 @@
+project Fibonacci is
+
+   type Operating_System_Type is
+      ("high_sierra", "ventura");
+   Operating_System : Operating_System_Type := external ("Operating_System", "ventura");
+   for Source_Dirs use (".");
+   for Object_Dir use "obj";
+   for Main use ("fibonacci");
+   for Exec_Dir use ".";
+
+   package Linker is
+
+      case Operating_System is
+
+         when "high_sierra" =>
+            for Default_Switches ("ada") use ("-L/usr/local/Cellar/python@3.11/3.11.0/Frameworks/Python.framework/Versions/3.11/lib", "-lpython3.11");
+
+         when "ventura" =>
+            for Default_Switches ("ada") use ("-L/usr/local/Cellar/python@3.11/3.11.0/Frameworks/Python.framework/Versions/3.11/lib", "-lpython3.11");
+      end case;
+   end Linker;
+
+end Fibonacci;
+

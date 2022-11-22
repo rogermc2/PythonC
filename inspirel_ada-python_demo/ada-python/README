@@ -1,0 +1,22 @@
+This is a simple demo project that shows the principles of integration
+between Ada and Python (here: Ada program calling Python script).
+
+In order to compile this project execute:
+
+$ gnatmake -Pada_main
+
+As a result a simple Ada program will be created in the ./obj directory
+that embeds the Python interpreter, imports an external Python script
+(python_module.py) and uses functions defined in that script.
+
+To run this program execute:
+
+$ ./obj/ada_main
+
+Note that the Ada program uses a very simplified package that encapsulates
+the gory details of inter-language integration. This package is not intended
+to be complete with regard to everything that can be done with Python and
+it is expected that this package will be extended as appropriate.
+
+Contact: http://www.inspirel.com/
+

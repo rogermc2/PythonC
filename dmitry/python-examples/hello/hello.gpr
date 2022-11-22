@@ -1,0 +1,15 @@
+with "gnatcoll_python.gpr";
+
+project Hello is
+
+   for Source_Dirs use ("../../../../../Ada_Source/components_4_64", "../../../../../Ada_Source/components_4_64/os/pthreads", "src");
+   for Object_Dir use "obj";
+   for Main use ("hello_python.adb");
+   for Languages use ("Ada", "C");
+
+   package Linker is
+      for Default_Switches ("ada") use ("-F/usr/local/Cellar/python@3.10/3.10.5/Frameworks");
+   end Linker;
+
+end Hello;
+

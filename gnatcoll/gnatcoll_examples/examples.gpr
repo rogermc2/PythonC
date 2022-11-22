@@ -1,0 +1,25 @@
+with "gnatcoll_python";
+
+project Examples is
+
+   type Operating_System_Type is
+      ("high_sierra", "monterey");
+   Operating_System : Operating_System_Type := external ("Operating_System", "high_sierra");
+
+   for Object_Dir use "obj";
+   for Exec_Dir use ".";
+   for Main use ("newclass.adb");
+   for Source_Files use ("common.ads",      "common.adb",
+                         "textconsole.ads", "textconsole.adb",
+                         "newclass.adb");
+ package Linker is
+      case Operating_System is
+         when "high_sierra" =>
+            for Default_Switches ("ada") use ("-L/usr/local/Cellar/python@3.10/3.10.4/Frameworks/Python.framework/Versions/Current/lib", "-lpython3.10");
+
+         when "monterey" =>
+            for Default_Switches ("ada") use ("-L/usr/local/Cellar/python@3.10/3.10.4/Frameworks/Python.framework/Versions/Current/lib", "-lpython3.10");
+      end case;
+   end Linker;
+
+end Examples;
