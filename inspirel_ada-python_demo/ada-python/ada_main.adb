@@ -37,10 +37,11 @@ begin
    Ada.Text_IO.Put_Line ("multiply:" & Integer'Image (Result));
    
    Result := Python.Call (Module, "div", A, B);
-   Ada.Text_IO.Put_Line ("divide  :" & Integer'Image (Result));
+   Ada.Text_IO.Put_Line ("divide  : " & Integer'Image (Result));
    
    Python.Close_Module (Module);
-
+   Ada.Text_IO.New_Line;
+   
    Python.Finalize;
    
 exception

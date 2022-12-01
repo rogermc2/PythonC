@@ -49,8 +49,12 @@ package body Python is
      (Obj : in PyObject; Name : in Interfaces.C.char_array) return PyObject;
    pragma Import (C, PyObject_GetAttrString, "PyObject_GetAttrString");
    
-   function PyObject_CallObject (Obj : in PyObject; Args : in PyObject) return PyObject;
+   function PyObject_CallObject (Obj : in PyObject; Args : in PyObject)
+                                 return PyObject;
    pragma Import (C, PyObject_CallObject, "PyObject_CallObject");
+   
+   function PyObject_Size (Obj : PyObject) return Interfaces.C.int;
+   pragma Import (C, PyObject_Size, "PyObject_Size");
    
    procedure PyErr_Print;
    pragma Import (C, PyErr_Print, "PyErr_Print");
@@ -65,8 +69,6 @@ package body Python is
    -- --------------------------------------------------------------------------
  
    procedure Initialize (Program_Name : in String := "") is
---        use Ada.Directories;
---        CWD : constant String := Current_Directory;  
    begin
       if Program_Name /= "" then
          declare
@@ -79,13 +81,8 @@ package body Python is
        
       Py_Initialize;
       
-      --  Below: workaround for the following issue:
-      --  http://stackoverflow.com/questions/13422206/how-to-load-a-custom-python-module-in-c
-
       Execute_String ("import sys");   
       Execute_String ("sys.path.append('.')");
---        Execute_String ("sys.path.append('/Ada_Projects/python/ada-python')");
---        Execute_String ("sys.path.append(" & Cwd & ")");
    end Initialize;
     
    -- --------------------------------------------------------------------------
@@ -148,14 +145,17 @@ package body Python is
    -- --------------------------------------------------------------------------
    --  helpers for use from all overloaded Call subprograms
    
-   function Get_Symbol (M : in Module; Function_Name : in String) return PyObject is
-      PyModule : PyObject := PyObject (M);
-      F        : PyObject := PyObject_GetAttrString (PyModule, Interfaces.C.To_C (Function_Name));
+   function Get_Symbol (M : in Module; Function_Name : in String)
+                        return PyObject is
       use type System.Address;
+      Routine_Name : constant String := "Python.Get_Symbol ";
+      PyModule : PyObject := PyObject (M);
+      F            : PyObject := PyObject_GetAttrString
+        (PyModule, Interfaces.C.To_C (Function_Name));
    begin
       Py_DecRef (PyModule);
       if F = System.Null_Address then
-         --PyErr_Print;
+         PyErr_Print;
          raise Interpreter_Error with "Cannot find function " & Function_Name;
       end if;
       
